@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
-import { UP_COLOR, DOWN_COLOR } from '../constants'
+import { UP_COLOR, DOWN_COLOR, fmtDay } from '../constants'
 
 const props = defineProps({ daily: { type: Array, required: true } })
 
@@ -15,7 +15,7 @@ onMounted(() => {
   chart.setOption({
     grid: { left: 60, right: 20, top: 30, bottom: 30 },
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: props.daily.map((r) => r.trading_day), axisLabel: { formatter: (v) => `${v.slice(4, 6)}/${v.slice(6, 8)}` } },
+    xAxis: { type: 'category', data: props.daily.map((r) => r.trading_day), axisLabel: { formatter: fmtDay } },
     yAxis: { type: 'value' },
     series: [{
       type: 'bar',

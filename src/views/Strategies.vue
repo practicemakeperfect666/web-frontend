@@ -23,6 +23,19 @@ async function load() {
 onMounted(load)
 watch(() => store.currentAccount, load)
 
+// WS 快照更新策略实时字段（pos/status/pnl），保留 REST 的 name
+watch(() => store.snapshot, (snap) => {
+  if (!snap || !snap.strategies) return
+  const acct = store.currentAccount
+  const live = acct === 'all' ? snap.strategies : snap.strategies.filter((s) => s.account === acct)
+  const map = {}
+  for (const s of live) map[s.account + '|' + s.strategy] = s
+  for (const row of list.value) {
+    const s = map[row.account + '|' + row.strategy]
+    if (s) Object.assign(row, { pos: s.pos, long_pos: s.long_pos, short_pos: s.short_pos, status: s.status, update_time: s.update_time, pnl: s.pnl })
+  }
+})
+
 function go(row) {
   router.push(`/strategy/${row.account}/${row.strategy}`)
 }

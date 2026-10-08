@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts'
-import { ACCOUNT_LABEL, ACCOUNT_COLOR } from '../constants'
+import { ACCOUNT_LABEL, ACCOUNT_COLOR, fmtDay } from '../constants'
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -24,7 +24,7 @@ function render() {
     grid: { left: 70, right: 20, top: 30, bottom: 30 },
     tooltip: { trigger: 'axis' },
     legend: { data: accounts.map((a) => ACCOUNT_LABEL[a] || a) },
-    xAxis: { type: 'category', data: xLabels, axisLabel: { formatter: (v) => `${v.slice(4, 6)}/${v.slice(6, 8)}` } },
+    xAxis: { type: 'category', data: xLabels, axisLabel: { formatter: fmtDay } },
     yAxis: { type: 'value', scale: true, axisLabel: { formatter: (v) => v + props.unit } },
     series: accounts.map((a) => ({
       name: ACCOUNT_LABEL[a] || a,

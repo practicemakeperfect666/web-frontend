@@ -11,6 +11,7 @@ function fmtMoney(v) {
   return (v ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 function fmtSigned(v) {
+  v = v ?? 0
   const s = Math.abs(v).toLocaleString('zh-CN')
   return v > 0 ? '+' + s : v < 0 ? '-' + s : s
 }
@@ -22,6 +23,7 @@ function fmtSigned(v) {
       <div class="tag-wrap">
         <span class="dot" :style="{ background: color }"></span>
         <span class="tag">{{ label }}</span>
+        <span v-if="account.accountid" class="acct-id">{{ account.accountid }}</span>
       </div>
       <span class="time">{{ account.snapshot_time }}</span>
     </div>
@@ -41,7 +43,11 @@ function fmtSigned(v) {
         <span class="val num">{{ fmtMoney(account.frozen) }}</span>
       </div>
       <div class="cell">
-        <span class="lbl">盈亏</span>
+        <span class="lbl">日内已实现</span>
+        <span class="val num" :class="(account.realized_pl || 0) >= 0 ? 'up' : 'down'">{{ fmtSigned(account.realized_pl) }}</span>
+      </div>
+      <div class="cell">
+        <span class="lbl">浮动盈亏</span>
         <span class="val num" :class="account.pnl >= 0 ? 'up' : 'down'">{{ fmtSigned(account.pnl) }}</span>
       </div>
     </div>
@@ -54,10 +60,11 @@ function fmtSigned(v) {
 .tag-wrap { display: flex; align-items: center; gap: 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .tag { font-size: 13px; font-weight: 600; }
+.acct-id { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
 .time { font-size: 11px; color: var(--text-3); }
 .balance { font-size: 30px; font-weight: 700; line-height: 1.2; }
 .balance-label { font-size: 11px; color: var(--text-3); margin: 4px 0 14px; }
-.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .cell { display: flex; flex-direction: column; gap: 4px; }
 .lbl { font-size: 11px; color: var(--text-3); }
 .val { font-size: 13px; font-weight: 500; }

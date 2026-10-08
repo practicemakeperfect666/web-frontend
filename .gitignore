@@ -12,10 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Environment (keep the template, ignore real overrides)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.kilo/
 .DS_Store
 *.suo
 *.ntvs*

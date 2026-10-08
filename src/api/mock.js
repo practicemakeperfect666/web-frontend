@@ -71,8 +71,8 @@ export function getStrategyList({ account } = {}) {
 // ---- account latest ----
 export function getAccountLatest({ account } = {}) {
   const rows = [
-    { account: 'real', balance: 1052500, available: 382400, frozen: 0, margin: 670100, pnl: 12500, snapshot_time: now() },
-    { account: 'simnow', balance: 977200, available: 210800, frozen: 0, margin: 766400, pnl: -8300, snapshot_time: now() }
+    { account: 'real', balance: 1052500, available: 382400, frozen: 0, margin: 670100, pnl: 12500, realized_pl: 8600, snapshot_time: now() },
+    { account: 'simnow', balance: 977200, available: 210800, frozen: 0, margin: 766400, pnl: -8300, realized_pl: -4200, snapshot_time: now() }
   ]
   return Promise.resolve(filter(rows, account))
 }
@@ -114,6 +114,52 @@ export function getOrders({ account, strategy, limit = 60 } = {}) {
     }
   }
   return Promise.resolve(filter(rows, account, strategy).slice(0, limit))
+}
+
+// ---- order stats (today: active / cancelled / rejected / by-status) ----
+export function getOrderStats({ account } = {}) {
+  const rows = []
+  for (const acct of ACCOUNTS) {
+    const total = acct === 'real' ? 24 : 31
+    const cancelled = acct === 'real' ? 5 : 8
+    const rejected = acct === 'real' ? 1 : 2
+    const active = acct === 'real' ? 4 : 7
+    rows.push({
+      account: acct, trading_day: '20260928',
+      total, active, cancelled, rejected,
+      cancel_rate: +(cancelled / total).toFixed(4),
+      by_status: {
+        SUBMITTING: active, NOTTRADED: active, PARTTRADED: 0,
+        ALLTRADED: total - cancelled - rejected - active,
+        CANCELLED: cancelled, REJECTED: rejected
+      }
+    })
+  }
+  return Promise.resolve(filter(rows, account))
+}
+
+// ---- daily order freq (per day x account x strategy; flag crazy churn) ----
+export function getOrderDailyFreq({ account, strategy, days = 30 } = {}) {
+  const rows = []
+  const today = new Date()
+  for (const acct of ACCOUNTS) {
+    for (const s of STRATEGIES) {
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(today)
+        d.setDate(d.getDate() - i)
+        const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+        const crazy = acct === 'simnow' && s.strategy === 'MultiLayer_TA'
+        const total = crazy ? 40 + Math.floor(Math.random() * 30) : 3 + Math.floor(Math.random() * 8)
+        const cancelled = crazy ? total - 1 - Math.floor(Math.random() * 3) : Math.floor(Math.random() * 2)
+        rows.push({
+          day, account: acct, strategy: s.strategy,
+          total, cancelled, rejected: Math.floor(Math.random() * 2),
+          cancel_rate: +(cancelled / total).toFixed(4)
+        })
+      }
+    }
+  }
+  return Promise.resolve(filter(rows, account, strategy))
 }
 
 // ---- trades ----
@@ -256,6 +302,10 @@ export function getSystemLatest() {
 export function getContract({ symbol } = {}) {
   const info = CONTRACT_INFO[symbol]
   return Promise.resolve(info ? { symbol, ...info } : null)
+}
+
+export function getServerTime() {
+  return Promise.resolve({ datetime: now() })
 }
 
 // ---- klines (1m base, aggregate to higher interval) ----

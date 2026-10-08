@@ -17,10 +17,12 @@ export function connectWS(onMessage) {
   let delay = 1000
   let closed = false
   const proto = location.protocol === 'https:' ? 'wss' : 'ws'
+  // dev 直连后端 8000（ws 不受同源限制，绕过 vite proxy）；生产走 nginx 反代 location.host
+  const wsHost = import.meta.env.DEV ? '127.0.0.1:8000' : location.host
 
   const connect = () => {
     if (closed) return
-    ws = new WebSocket(`${proto}://${location.host}/ws`)
+    ws = new WebSocket(`${proto}://${wsHost}/ws`)
     ws.onopen = () => { delay = 1000; store.wsConnected = true }
     ws.onmessage = (e) => onMessage(JSON.parse(e.data))
     ws.onclose = () => {

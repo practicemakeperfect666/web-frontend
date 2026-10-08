@@ -1,13 +1,36 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { store } from './store'
+import { getServerTime } from './api'
+import { connectWS } from './api/ws'
 import AccountSwitch from './components/AccountSwitch.vue'
 
 const route = useRoute()
+const serverTime = ref('')
+let timeTimer = null
+let wsCleanup = null
+
+async function tickTime() {
+  try { serverTime.value = (await getServerTime()).datetime } catch (e) { /* ignore */ }
+}
+
+onMounted(() => {
+  tickTime()
+  timeTimer = setInterval(tickTime, 3000)
+  wsCleanup = connectWS((msg) => {
+    if (msg.type === 'snapshot') store.snapshot = msg.data
+  })
+})
+onBeforeUnmount(() => {
+  timeTimer && clearInterval(timeTimer)
+  wsCleanup && wsCleanup()
+})
 
 const menus = [
   { path: '/', label: '策略' },
   { path: '/dashboard', label: '仪表盘' },
+  { path: '/orders', label: '订单' },
   { path: '/logs', label: '日志' }
 ]
 </script>
@@ -29,6 +52,7 @@ const menus = [
         <div class="header-title">{{ route.meta.title }}</div>
         <div class="header-right">
           <AccountSwitch v-if="route.name !== 'strategy-detail'" />
+          <span class="srv-time">{{ serverTime }}</span>
           <span class="conn" :class="{ on: store.wsConnected }">
             {{ store.wsConnected ? '● 已连接' : '○ 未连接' }}
           </span>
@@ -79,6 +103,7 @@ const menus = [
 
 .header-right { display: flex; align-items: center; gap: 16px; }
 
+.srv-time { color: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
 .conn { color: var(--text-3); font-size: 12px; }
 .conn.on { color: var(--down-color); }
 
