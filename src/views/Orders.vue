@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { store } from '../store'
 import { getOrders, getOrderStats, getOrderDailyFreq } from '../api'
 import { ACCOUNT_LABEL, ACCOUNT_COLOR, DIRECTION_MAP, OFFSET_MAP, STATUS_MAP } from '../constants'
@@ -29,7 +29,14 @@ async function load() {
   freq.value = [...f].sort((a, b) => b.cancelled - a.cancelled)
 }
 
-onMounted(load)
+let timer = null
+onMounted(() => {
+  load()
+  timer = setInterval(load, 5000)
+})
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 watch(() => store.currentAccount, load)
 </script>
 
@@ -73,6 +80,9 @@ watch(() => store.currentAccount, load)
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }"><el-tag :type="STATUS_TYPE[row.status] || 'info'" size="small">{{ STATUS_MAP[row.status] }}</el-tag></template>
         </el-table-column>
+        <el-table-column prop="queue_delay_ms" label="入队延迟ms" width="110" align="right" sortable>
+          <template #default="{ row }"><span class="num" :class="row.queue_delay_ms > 500 ? 'up' : ''">{{ row.queue_delay_ms || '—' }}</span></template>
+        </el-table-column>
         <el-table-column prop="submit_time" label="提交时间" width="180" />
       </el-table>
     </div>
@@ -95,8 +105,15 @@ watch(() => store.currentAccount, load)
           <template #default="{ row }"><span class="num">{{ row.price }}</span></template>
         </el-table-column>
         <el-table-column prop="volume" label="手数" width="70" align="right" sortable />
+        <el-table-column prop="traded" label="已成交" width="70" align="right" sortable />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }"><el-tag :type="STATUS_TYPE[row.status] || 'info'" size="small">{{ STATUS_MAP[row.status] }}</el-tag></template>
+        </el-table-column>
+        <el-table-column prop="queue_delay_ms" label="入队延迟ms" width="110" align="right" sortable>
+          <template #default="{ row }"><span class="num" :class="row.queue_delay_ms > 500 ? 'up' : ''">{{ row.queue_delay_ms || '—' }}</span></template>
+        </el-table-column>
+        <el-table-column prop="cancel_delay_ms" label="撤单延迟ms" width="110" align="right" sortable>
+          <template #default="{ row }"><span class="num" :class="row.cancel_delay_ms > 500 ? 'up' : ''">{{ row.cancel_delay_ms || '—' }}</span></template>
         </el-table-column>
         <el-table-column prop="submit_time" label="提交时间" width="180" />
       </el-table>

@@ -6,7 +6,7 @@ const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 export const getStrategyList = (p) => (useMock ? mock.getStrategyList(p) : http.get('/api/strategies', { params: p }))
 export const getAccountLatest = (p) => (useMock ? mock.getAccountLatest(p) : http.get('/api/account/latest', { params: p }))
 export const getPositions = (p) => (useMock ? mock.getPositions(p) : http.get('/api/positions', { params: p }))
-export const getAccountPositions = (p) => (useMock ? mock.getPositions(p) : http.get('/api/account-positions', { params: p }))
+export const getAccountPositions = (p) => (useMock ? mock.getAccountPositions(p) : http.get('/api/account-positions', { params: p }))
 export const getAccountIntradayPnl = (p) => (useMock ? mock.getAccountLatest(p) : http.get('/api/account-intraday-pnl', { params: p }))
 export const getOrders = (p) => (useMock ? mock.getOrders(p) : http.get('/api/orders', { params: p }))
 export const getOrderStats = (p) => (useMock ? mock.getOrderStats(p) : http.get('/api/orders/stats', { params: p }))

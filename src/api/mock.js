@@ -95,6 +95,24 @@ export function getPositions({ account, strategy } = {}) {
   return Promise.resolve(filter(rows, account, strategy))
 }
 
+// ---- account positions (CTP 账户实际持仓，字段对齐 AccountPosition) ----
+export function getAccountPositions({ account } = {}) {
+  const rows = []
+  for (const acct of ACCOUNTS) {
+    for (const s of STRATEGIES) {
+      const volume = acct === 'real' ? 2 : 10
+      rows.push({
+        account: acct, accountid: acct === 'real' ? '60012345' : '089270',
+        vt_symbol: s.symbol, direction: 'LONG', volume,
+        price: +(s.base + (Math.random() * 40 - 20)).toFixed(1),
+        pnl: Math.round(Math.random() * 6000 - 2000),
+        snapshot_time: now()
+      })
+    }
+  }
+  return Promise.resolve(filter(rows, account))
+}
+
 // ---- orders ----
 export function getOrders({ account, strategy, limit = 60 } = {}) {
   const rows = []
@@ -108,7 +126,7 @@ export function getOrders({ account, strategy, limit = 60 } = {}) {
           direction: i % 2 ? 'SHORT' : 'LONG', offset: i % 3 ? 'CLOSE' : 'OPEN',
           price: +(s.base + (Math.random() * 20 - 10)).toFixed(1),
           volume: acct === 'real' ? 1 : 5, traded: 0,
-          status: statuses[i % 3], submit_time: now(), delay_ms: 0
+          status: statuses[i % 3], submit_time: now(), queue_delay_ms: 0, cancel_delay_ms: 0
         })
       }
     }
@@ -175,7 +193,6 @@ export function getTrades({ account, strategy, limit = 100 } = {}) {
           price: +(s.base + (Math.random() * 30 - 15)).toFixed(1),
           volume: acct === 'real' ? 1 : 5,
           slippage: +(Math.random() * 2).toFixed(2),
-          delay_ms: Math.floor(200 + Math.random() * 800),
           trade_time: now()
         })
       }
@@ -266,8 +283,8 @@ export function getStatsSummary({ account, strategy } = {}) {
       rows.push({
         account: acct, strategy: s.strategy,
         total_rounds: 38, win_rate: winRate, profit_factor: 1.8, avg_holding_seconds: 5400,
-        long: { rounds: 20, win_rate: winRate, pnl: 8200 },
-        short: { rounds: 18, win_rate: +(winRate - 0.05).toFixed(2), pnl: 4300 }
+        long: { rounds: 20, win_rate: winRate, pnl: 8200, profit_factor: 1.9, avg_holding_seconds: 5400, return_rate: 0.12 },
+        short: { rounds: 18, win_rate: +(winRate - 0.05).toFixed(2), pnl: 4300, profit_factor: 1.6, avg_holding_seconds: 4800, return_rate: 0.08 }
       })
     }
   }

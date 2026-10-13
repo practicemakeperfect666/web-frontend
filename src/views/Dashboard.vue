@@ -5,6 +5,7 @@ import { getAccountLatest, getSystemLatest, getEquity, getMarginSeries, getAccou
 import { DIRECTION_MAP, ACCOUNT_LABEL, ACCOUNT_COLOR } from '../constants'
 import AccountCard from '../components/AccountCard.vue'
 import EquityChart from '../components/EquityChart.vue'
+import DrawdownChart from '../components/DrawdownChart.vue'
 
 const accounts = ref([])
 const sys = ref(null)
@@ -12,6 +13,7 @@ const equity = ref([])
 const margin = ref([])
 const positions = ref([])
 const dailyPnl = ref([])
+const accountEquityDaily = ref([])
 const freq = ref('daily')
 const marginFreq = ref('daily')
 
@@ -27,6 +29,7 @@ async function load() {
   margin.value = await getMarginSeries(acct ? { account: acct, freq: marginFreq.value } : { freq: marginFreq.value })
   positions.value = await getAccountPositions(acct ? { account: acct } : {})
   dailyPnl.value = await getAccountIntradayPnl(acct ? { account: acct } : {})
+  accountEquityDaily.value = await getEquity(acct ? { account: acct, freq: 'daily' } : { freq: 'daily' })
 }
 
 onMounted(load)
@@ -39,6 +42,9 @@ watch(() => store.snapshot, (snap) => {
   }
   if (snap.positions) {
     positions.value = acct === 'all' ? snap.positions : snap.positions.filter((p) => p.account === acct)
+  }
+  if (snap.intraday_pnl) {
+    dailyPnl.value = acct === 'all' ? snap.intraday_pnl : snap.intraday_pnl.filter((p) => p.account === acct)
   }
   if (snap.system) {
     sys.value = snap.system
@@ -84,6 +90,11 @@ watch(marginFreq, load)
         <el-radio-button value="intraday">日内</el-radio-button>
       </el-radio-group>
       <EquityChart :data="equity" />
+    </div>
+
+    <div v-if="accountEquityDaily.length" class="card">
+      <div class="card-title">账户回撤</div>
+      <DrawdownChart :data="accountEquityDaily" />
     </div>
 
     <div v-if="margin.length" class="card">

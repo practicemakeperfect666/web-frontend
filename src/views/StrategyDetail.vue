@@ -7,7 +7,6 @@ import { ACCOUNT_LABEL, ACCOUNT_COLOR, DIRECTION_MAP, OFFSET_MAP, STATUS_MAP } f
 import KlineChart from '../components/KlineChart.vue'
 import PnlChart from '../components/PnlChart.vue'
 import EquityChart from '../components/EquityChart.vue'
-import DrawdownChart from '../components/DrawdownChart.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,8 +19,7 @@ const trades = ref([])
 const orders = ref([])
 const daily = ref([])
 const todayPnl = computed(() => daily.value.length ? daily.value[daily.value.length - 1].realized_pl : 0)
-const equity = ref([])
-const equityFreq = ref('daily')
+const intradayEquity = ref([])
 const stats = ref(null)
 const contract = ref(null)
 
@@ -54,18 +52,16 @@ async function load() {
   orders.value = ord
   daily.value = dl
   stats.value = st[0]
-  await loadEquity()
+  await loadIntradayEquity()
 }
 
-async function loadEquity() {
-  equity.value = await getEquity({ account, strategy, freq: equityFreq.value })
+async function loadIntradayEquity() {
+  intradayEquity.value = await getEquity({ account, strategy, freq: 'intraday' })
 }
 
 function back() { router.push('/') }
 
 onMounted(load)
-
-watch(equityFreq, loadEquity)
 
 // 实时刷新盈亏/持仓/状态（strategy_status 每 3s 写入，经 WS 推送）
 watch(() => store.snapshot, (snap) => {
@@ -141,9 +137,6 @@ watch(() => store.snapshot, (snap) => {
         <el-table-column prop="slippage" label="滑点" width="90" align="right" sortable>
           <template #default="{ row }"><span class="num" :class="row.slippage > 1 ? 'up' : ''">{{ row.slippage }}</span></template>
         </el-table-column>
-        <el-table-column prop="delay_ms" label="延迟ms" width="100" align="right" sortable>
-          <template #default="{ row }"><span class="num" :class="row.delay_ms > 500 ? 'up' : ''">{{ row.delay_ms }}</span></template>
-        </el-table-column>
         <el-table-column prop="trade_time" label="成交时间" width="180" />
       </el-table>
     </div>
@@ -164,31 +157,28 @@ watch(() => store.snapshot, (snap) => {
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }"><el-tag :type="STATUS_TYPE[row.status] || 'info'" size="small">{{ STATUS_MAP[row.status] }}</el-tag></template>
         </el-table-column>
+        <el-table-column prop="queue_delay_ms" label="入队延迟ms" width="110" align="right" sortable>
+          <template #default="{ row }"><span class="num" :class="row.queue_delay_ms > 500 ? 'up' : ''">{{ row.queue_delay_ms || '—' }}</span></template>
+        </el-table-column>
+        <el-table-column prop="cancel_delay_ms" label="撤单延迟ms" width="110" align="right" sortable>
+          <template #default="{ row }"><span class="num" :class="row.cancel_delay_ms > 500 ? 'up' : ''">{{ row.cancel_delay_ms || '—' }}</span></template>
+        </el-table-column>
         <el-table-column prop="submit_time" label="提交时间" width="180" />
       </el-table>
     </div>
 
-    <div v-if="equity.length" class="card">
-      <div class="card-title">净值曲线</div>
-      <el-radio-group v-model="equityFreq" size="small" style="margin-bottom: 8px">
-        <el-radio-button value="daily">日频</el-radio-button>
-        <el-radio-button value="intraday">日内</el-radio-button>
-      </el-radio-group>
-      <EquityChart :data="equity" />
-    </div>
-
-    <div v-if="equity.length" class="card">
-      <div class="card-title">回撤</div>
-      <DrawdownChart :data="equity" />
-    </div>
-
     <div v-if="daily.length" class="card">
-      <div class="card-title">每日盈亏</div>
+      <div class="card-title">日频盈亏</div>
       <div class="pnl-today">
         <span class="lbl">今日已实现盈亏总额</span>
         <span class="val num" :class="todayPnl >= 0 ? 'up' : 'down'">{{ todayPnl >= 0 ? '+' : '' }}{{ todayPnl }}</span>
       </div>
       <PnlChart :daily="daily" />
+    </div>
+
+    <div v-if="intradayEquity.length" class="card">
+      <div class="card-title">日内盈亏</div>
+      <EquityChart :data="intradayEquity" />
     </div>
 
     <div v-if="stats" class="card">

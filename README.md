@@ -25,56 +25,52 @@
 - ECharts（净值 / 回撤 / 盈亏图表）
 - lightweight-charts（K 线）
 
-## ✨ 特性
+## ✨ 功能
 
 - 策略维度首页 → 策略详情
 - 双账户切换（real / simnow / 全部）
 - WebSocket 快照实时更新 + REST 拉历史
 - 白底现代主题，红涨绿跌（国内期货习惯）
+- 内置 mock 数据，无需后端即可纯 UI 开发
 
-## 📦 环境要求
+## 📄 页面
 
-- Node.js ≥ 18
+| 路由 | 文件 | 说明 |
+| :--- | :--- | :--- |
+| `/` | `views/Strategies.vue` | 策略卡片首页 |
+| `/strategy/:account/:strategy` | `views/StrategyDetail.vue` | 策略详情 |
+| `/dashboard` | `views/Dashboard.vue` | 账户 + 系统仪表盘 |
+| `/orders` | `views/Orders.vue` | 委托与挂撤单 |
+| `/logs` | `views/Logs.vue` | 实时日志 |
 
-## 🚀 安装
+### 策略首页（`/`）
 
-```bash
-npm install
-```
+网格卡片，每个策略一张卡，点击进入详情。卡片字段：品种徽章（按品种配色）、账户标签、策略名、合约代码、净持仓、盈亏、状态点、更新时间。静态字段走 REST，`pos` / `pnl` / `status` 由 WS 快照实时刷新。
 
-## ▶️ 运行（开发）
+### 策略详情（`/strategy/:account/:strategy`）
 
-```bash
-npm run dev    # http://localhost:5173
-```
+顶部返回键 + 策略名 / 品种·合约 / 账户标签 / 状态 / 净持仓 / 盈亏，往下分块展示：
 
-`/api` 和 `/ws` 已代理到后端 `127.0.0.1:8000`（见 `vite.config.js`）。
+- 合约信息：合约、品种、交易所、合约乘数、最小变动价位、保证金率
+- 行情：K 线（lightweight-charts）
+- 持仓：合约 / 方向 / 手数 / 成本 / 盈亏 / 时间
+- 成交：合约 / 价格 / 手数 / 滑点 / 延迟 ms / 时间
+- 委托：方向 / 开平 / 价格 / 量 / 状态
+- 净值曲线（日频 / 日内切换）与回撤曲线
+- 每日盈亏：今日已实现盈亏 + 柱状图
+- 绩效统计：总平仓笔数、日均交易、胜率、盈亏比、平均持仓、累计盈亏、收益率，再分多头 / 空头两组明细
 
-### Mock 模式（无需后端）
+### 仪表盘（`/dashboard`）
 
-```bash
-# .env
-VITE_USE_MOCK=true
-npm run dev
-```
+账户维度总览（区别于策略维度）：AccountCard 账户卡、账户持仓表、账户净值曲线（日频 / 日内）、保证金占用曲线（%）、账户日内盈亏表（已实现 / 浮动 / 总盈亏 / 权益）、系统指标（CPU / 内存 / 磁盘 / 运行时间）。
 
-使用内存 demo 数据渲染，适合纯 UI 开发。
+### 订单（`/orders`）
 
-## 🔨 构建（生产）
+顶部按账户统计卡（活跃挂单 / 今日委托 / 撤单 / 拒单 / 撤单率）；活跃挂单表（仅 SUBMITTING / NOTTRADED / PARTTRADED）；全部委托表（最多 300 条）；每日挂撤单频次表（按撤单数降序，挂单≥20、撤单≥15、撤单率≥50% 标红）。
 
-```bash
-npm run build   # 输出 dist/
-```
+### 日志（`/logs`）
 
-用 nginx 托管 `dist/`，把 `/api` 和 `/ws` 反代到后端。
-
-## 🌍 环境变量
-
-| 变量 | 默认值 | 说明 |
-| :--- | :----- | :--------------------------------- |
-| `VITE_USE_MOCK` | `false` | 用 mock 数据替代后端 |
-
-复制 `.env.example` 为 `.env`（或 `.env.development` / `.env.production`）覆盖默认值。
+实时日志流，每行 = 时间戳 + 账户 + 级别 + 消息，级别配色 INFO / WARNING / ERROR，加载后自动滚到最新一条。
 
 ## 📁 项目结构
 
@@ -94,6 +90,10 @@ web-frontend/
     ├── App.vue
     └── main.js
 ```
+
+## 🚀 安装与使用
+
+安装依赖、启动开发服务器、Mock 模式、生产构建与部署等完整步骤见 vnpy-domestic 主仓库的 [vnpy-domestic-web端监控使用手册.md](https://github.com/practicemakeperfect666/vnpy-domestic/blob/main/vnpy-domestic-web%E7%AB%AF%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C.md)。
 
 ## 🔗 相关项目
 
